@@ -44,6 +44,7 @@ def plantnet_identify(args: dict, **kwargs) -> str:
     organ = args.get("organ") or "auto"
     project = args.get("project") or "all"
     lang = args.get("lang") or "en"
+    include_reference_images = args.get("include_reference_images", True)
     api_key = os.environ.get("PLANTNET_API_KEY", "")
 
     try:
@@ -55,6 +56,7 @@ def plantnet_identify(args: dict, **kwargs) -> str:
             organs=organs,
             project=project,
             lang=lang,
+            include_reference_images=bool(include_reference_images),
         )
         return json.dumps(result)
     except PlantNetError as exc:

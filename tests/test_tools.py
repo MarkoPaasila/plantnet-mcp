@@ -50,6 +50,7 @@ def test_plantnet_identify_success(tmp_path, monkeypatch):
         organs=None,
         project="weurope",
         lang="en",
+        include_reference_images=True,
     )
     assert out["bestMatch"] == "Taraxacum officinale F.H.Wigg."
 
@@ -79,6 +80,32 @@ def test_plantnet_identify_multiple_paths(tmp_path, monkeypatch):
         organs=["flower", "leaf"],
         project="all",
         lang="en",
+        include_reference_images=True,
+    )
+
+
+def test_plantnet_identify_explicit_false_include_reference_images(tmp_path, monkeypatch):
+    image = tmp_path / "leaf.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+    monkeypatch.setenv("PLANTNET_API_KEY", "test-key")
+
+    with patch(
+        "hermes_plantnet_plugin.tools.identify_plant",
+        return_value={"bestMatch": "Rosa canina L.", "results": []},
+    ) as mock_identify:
+        plantnet_identify({
+            "image_paths": [str(image)],
+            "include_reference_images": False,
+        })
+
+    mock_identify.assert_called_once_with(
+        image_paths=[str(image)],
+        api_key="test-key",
+        organ="auto",
+        organs=None,
+        project="all",
+        lang="en",
+        include_reference_images=False,
     )
 
 

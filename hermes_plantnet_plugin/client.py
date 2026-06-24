@@ -14,6 +14,7 @@ VALID_ORGANS = frozenset({"auto", "leaf", "flower", "fruit", "bark", "habit"})
 VALID_IMAGE_SUFFIXES = frozenset({".jpg", ".jpeg", ".png"})
 MAX_IMAGES = 5
 TOP_RESULTS = 5
+MAX_REFERENCE_IMAGES = 3
 
 
 class PlantNetError(Exception):
@@ -78,11 +79,30 @@ def _mime_type(path: Path) -> str:
     return "image/png"
 
 
+def _trim_image(entry: dict[str, Any]) -> dict[str, Any]:
+    urls = entry.get("url") or {}
+    original = urls.get("o")
+    medium = urls.get("m")
+    small = urls.get("s")
+    return {
+        "url": medium or original or small,
+        "urls": {
+            "original": original,
+            "medium": medium,
+            "small": small,
+        },
+        "organ": entry.get("organ"),
+        "author": entry.get("author"),
+        "license": entry.get("license"),
+        "citation": entry.get("citation"),
+    }
+
+
 def _trim_species(entry: dict[str, Any]) -> dict[str, Any]:
     species = entry.get("species") or {}
     genus = species.get("genus") or {}
     family = species.get("family") or {}
-    return {
+    result = {
         "score": entry.get("score"),
         "scientificName": species.get("scientificName"),
         "scientificNameWithoutAuthor": species.get("scientificNameWithoutAuthor"),
@@ -92,6 +112,14 @@ def _trim_species(entry: dict[str, Any]) -> dict[str, Any]:
         "family": family.get("scientificNameWithoutAuthor") or family.get("scientificName"),
         "gbif": (entry.get("gbif") or {}).get("id"),
     }
+    raw_images = entry.get("images")
+    if raw_images:
+        result["referenceImages"] = [
+            _trim_image(image)
+            for image in raw_images[:MAX_REFERENCE_IMAGES]
+            if isinstance(image, dict)
+        ]
+    return result
 
 
 def normalize_response(payload: dict[str, Any], top_n: int = TOP_RESULTS) -> dict[str, Any]:
@@ -120,6 +148,7 @@ def identify_plant(
     organs: list[str] | None = None,
     project: str = "all",
     lang: str = "en",
+    include_reference_images: bool = False,
     timeout: float = 60.0,
     client: httpx.Client | None = None,
 ) -> dict[str, Any]:
@@ -141,6 +170,8 @@ def identify_plant(
 
     url = f"{API_BASE}/{project_value}"
     params = {"api-key": key, "lang": lang_value}
+    if include_reference_images:
+        params["include-related-images"] = "true"
 
     with ExitStack() as stack:
         files = []

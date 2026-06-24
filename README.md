@@ -2,7 +2,7 @@
 
 Hermes Agent plugin for identifying plants from photos using the [Pl@ntNet API](https://my.plantnet.org/).
 
-**Version:** `0.3.0` — see [Changelog](CHANGELOG.md)
+**Version:** `0.4.0` — see [Changelog](CHANGELOG.md)
 
 ## Tool
 
@@ -84,6 +84,7 @@ Hermes attaches images with path hints like `[Image attached at: /home/user/.her
 | `organs` | — | Optional per-image organ list (`leaf`, `flower`, etc.) |
 | `project` | `all` | Flora project (`weurope`, `canada`, etc.) |
 | `lang` | `en` | Language for common names |
+| `include_reference_images` | `true` | Pl@ntNet database reference photo URLs per result (with citation) |
 
 ### Breaking change (0.2.0)
 

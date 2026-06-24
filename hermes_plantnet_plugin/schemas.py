@@ -58,6 +58,14 @@ PLANTNET_IDENTIFY = {
                     "Language code for common names in results (default en)."
                 ),
             },
+            "include_reference_images": {
+                "type": "boolean",
+                "description": (
+                    "Request Pl@ntNet database reference photos for each result "
+                    "(not the user's uploaded images). Returns URLs with attribution "
+                    "metadata. Default true."
+                ),
+            },
         },
         "required": ["image_paths"],
     },

@@ -31,6 +31,19 @@ SAMPLE_RESPONSE = {
                 "family": {"scientificNameWithoutAuthor": "Rosaceae"},
             },
             "gbif": {"id": "3001234"},
+            "images": [
+                {
+                    "organ": "flower",
+                    "author": "Konstans Big",
+                    "license": "cc-by-sa",
+                    "citation": "Konstans Big / Pl@ntNet, cc-by-sa",
+                    "url": {
+                        "o": "https://bs.plantnet.org/image/o/abc123",
+                        "m": "https://bs.plantnet.org/image/m/abc123",
+                        "s": "https://bs.plantnet.org/image/s/abc123",
+                    },
+                },
+            ],
         },
         {
             "score": 0.65,
@@ -96,6 +109,16 @@ def test_normalize_response_trims_fields():
     assert first["family"] == "Rosaceae"
     assert first["gbif"] == "3001234"
     assert out["predictedOrgans"][0]["organ"] == "flower"
+
+
+def test_normalize_response_includes_reference_images():
+    out = normalize_response(SAMPLE_RESPONSE, top_n=1)
+    images = out["results"][0]["referenceImages"]
+    assert len(images) == 1
+    assert images[0]["url"] == "https://bs.plantnet.org/image/m/abc123"
+    assert images[0]["urls"]["medium"] == "https://bs.plantnet.org/image/m/abc123"
+    assert images[0]["organ"] == "flower"
+    assert images[0]["citation"] == "Konstans Big / Pl@ntNet, cc-by-sa"
 
 
 def test_identify_plant_missing_api_key(tmp_path):
@@ -219,3 +242,40 @@ def test_identify_plant_rate_limit(tmp_path):
     client = httpx.Client(transport=transport)
     with pytest.raises(PlantNetError, match="rate limit"):
         identify_plant(image_paths=[str(image)], api_key="key", client=client)
+
+
+def test_identify_plant_sends_include_related_images(tmp_path):
+    image = tmp_path / "plant.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["include-related-images"] == "true"
+        return httpx.Response(200, json=SAMPLE_RESPONSE)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    result = identify_plant(
+        image_paths=[str(image)],
+        api_key="test-key",
+        include_reference_images=True,
+        client=client,
+    )
+    assert result["results"][0]["referenceImages"][0]["url"].endswith("abc123")
+
+
+def test_identify_plant_omits_include_related_images_when_false(tmp_path):
+    image = tmp_path / "plant.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "include-related-images" not in request.url.params
+        return httpx.Response(200, json=SAMPLE_RESPONSE)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    identify_plant(
+        image_paths=[str(image)],
+        api_key="test-key",
+        include_reference_images=False,
+        client=client,
+    )

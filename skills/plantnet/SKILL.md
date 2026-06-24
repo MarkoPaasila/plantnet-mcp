@@ -51,6 +51,7 @@ In interactive `hermes chat`, attach multiple images via `/image` or paste, then
 | `organs` | — | Optional per-image organ list (same length as `image_paths`) |
 | `project` | `all` | Flora region; see below |
 | `lang` | `en` | Language for common names |
+| `include_reference_images` | `true` | Pl@ntNet database reference photos per result (URLs + citation) |
 
 For casual identification, `organ=auto` and `project=all` are fine.
 
@@ -85,6 +86,7 @@ More flora lists: https://my.plantnet.org/doc/newfloras
 3. Include **common names** when present, plus scientific name.
 4. Mention close alternatives when scores are similar (user may need a clearer photo).
 5. Note **`predictedOrgans`** if Pl@ntNet detected a different organ than expected.
+6. When **`referenceImages`** are present (default with `include_reference_images=true`), share the medium **`url`** for the top match and include the **`citation`** (e.g. "Konstans Big / Pl@ntNet, cc-by-sa"). These are reference photos from the Pl@ntNet database, not the user's uploads.
 
 Example phrasing: "Most likely *Rosa canina* (dog rose) — 91% confidence. Alternatives: *Rosa rubiginosa* (78%), *Rosa arvensis* (65%)."
 
