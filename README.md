@@ -22,16 +22,26 @@ Bundled skill: `plantnet:plantnet` (load with `skill_view`).
 
 ## Install
 
-### Hermes plugin manager (recommended)
+### From GitHub (recommended)
 
 ```bash
-hermes plugins install /path/to/plantnet-mcp --enable
+hermes plugins install MarkoPaasila/plantnet-mcp --enable
 ```
 
-Or from a git URL once published:
+Or with the full Git URL:
 
 ```bash
-hermes plugins install your-org/plantnet-mcp --enable
+hermes plugins install https://github.com/MarkoPaasila/plantnet-mcp --enable
+```
+
+If you use the Hermes gateway, restart it after install: `hermes gateway restart`.
+
+### Local clone (development)
+
+```bash
+git clone https://github.com/MarkoPaasila/plantnet-mcp.git
+cd plantnet-mcp
+hermes plugins install "$(pwd)" --enable
 ```
 
 ### Pip (development)
