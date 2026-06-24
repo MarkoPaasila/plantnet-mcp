@@ -2,7 +2,7 @@
 
 Hermes Agent plugin for identifying plants from photos using the [Pl@ntNet API](https://my.plantnet.org/).
 
-**Version:** `0.2.0` — see [Changelog](CHANGELOG.md)
+**Version:** `0.3.0` — see [Changelog](CHANGELOG.md)
 
 ## Tool
 

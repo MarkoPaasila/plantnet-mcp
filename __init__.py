@@ -1,10 +1,8 @@
-"""Hermes plugin entry at repo root — delegates to the implementation package."""
+"""Hermes directory-plugin entry — delegates to the implementation package."""
 
 import sys
 from pathlib import Path
 
-# Hermes loads this file as a directory plugin (not via pip entry points).
-# Ensure the repo root is on sys.path so the sibling package imports.
 _root = Path(__file__).resolve().parent
 _root_str = str(_root)
 if _root_str not in sys.path:
