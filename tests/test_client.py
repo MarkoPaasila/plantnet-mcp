@@ -279,3 +279,79 @@ def test_identify_plant_omits_include_related_images_when_false(tmp_path):
         include_reference_images=False,
         client=client,
     )
+
+
+def test_identify_plant_resolves_project_from_coordinates(tmp_path):
+    image = tmp_path / "plant.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(f"{request.method} {request.url.path}")
+        if request.method == "GET" and request.url.path == "/v2/projects":
+            return httpx.Response(200, json=[
+                {"id": "k-southwestern-europe", "title": "Southwestern Europe"},
+            ])
+        assert request.method == "POST"
+        assert request.url.path == "/v2/identify/k-southwestern-europe"
+        return httpx.Response(200, json={
+            **SAMPLE_RESPONSE,
+            "query": {**SAMPLE_RESPONSE["query"], "project": "k-southwestern-europe"},
+        })
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    result = identify_plant(
+        image_paths=[str(image)],
+        api_key="test-key",
+        latitude=43.451,
+        longitude=3.145,
+        client=client,
+    )
+    assert calls[0] == "GET /v2/projects"
+    assert result["location"]["project"] == "k-southwestern-europe"
+    assert result["location"]["source"] == "parameter"
+
+
+def test_identify_plant_explicit_project_skips_location_api(tmp_path):
+    image = tmp_path / "plant.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert "/v2/identify/weurope" in str(request.url)
+        return httpx.Response(200, json=SAMPLE_RESPONSE)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    result = identify_plant(
+        image_paths=[str(image)],
+        api_key="test-key",
+        project="weurope",
+        latitude=43.451,
+        longitude=3.145,
+        client=client,
+    )
+    assert "location" not in result
+
+
+def test_identify_plant_use_location_false_skips_resolution(tmp_path):
+    image = tmp_path / "plant.jpg"
+    image.write_bytes(b"\xff\xd8\xff\xd9")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert "/v2/identify/all" in str(request.url)
+        return httpx.Response(200, json=SAMPLE_RESPONSE)
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    result = identify_plant(
+        image_paths=[str(image)],
+        api_key="test-key",
+        latitude=43.451,
+        longitude=3.145,
+        use_location=False,
+        client=client,
+    )
+    assert "location" not in result

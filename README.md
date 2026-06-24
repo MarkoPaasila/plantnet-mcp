@@ -2,7 +2,7 @@
 
 Hermes Agent plugin for identifying plants from photos using the [Pl@ntNet API](https://my.plantnet.org/).
 
-**Version:** `0.4.0` — see [Changelog](CHANGELOG.md)
+**Version:** `0.5.0` — see [Changelog](CHANGELOG.md)
 
 ## Tool
 
@@ -82,9 +82,26 @@ Hermes attaches images with path hints like `[Image attached at: /home/user/.her
 | `image_paths` | required | 1–5 local JPEG/PNG paths from image hints (same plant) |
 | `organ` | `auto` | Organ for all images when `organs` is omitted |
 | `organs` | — | Optional per-image organ list (`leaf`, `flower`, etc.) |
-| `project` | `all` | Flora project (`weurope`, `canada`, etc.) |
+| `project` | `all` | Flora project (`weurope`, `canada`, etc.); auto-resolved from GPS when `all` |
 | `lang` | `en` | Language for common names |
 | `include_reference_images` | `true` | Pl@ntNet database reference photo URLs per result (with citation) |
+| `latitude` | — | Optional WGS84 latitude; used with `longitude` when EXIF GPS is absent |
+| `longitude` | — | Optional WGS84 longitude; must be provided with `latitude` |
+| `use_location` | `true` | When true and `project` is `all`, pick the nearest flora from GPS or coordinates |
+
+### Location-aware flora selection
+
+When `project` is `all` (the default) and `use_location` is true, the plugin:
+
+1. Reads GPS from image EXIF (first image with coordinates), or uses `latitude`/`longitude` if provided.
+2. Calls Pl@ntNet's `/v2/projects?lat=&lon=` API to find the closest flora project.
+3. Identifies against that project instead of worldwide `all`.
+
+The response includes a `location` object with coordinates, resolved `project`, and `source` (`exif` or `parameter`) when location was used.
+
+Set `use_location=false` to force worldwide flora. Set an explicit `project` (e.g. `weurope`) to skip auto-resolution.
+
+**Note:** Hermes-cached images (e.g. from Telegram) often strip EXIF. Pass `latitude`/`longitude` when the user states where the photo was taken.
 
 ### Breaking change (0.2.0)
 

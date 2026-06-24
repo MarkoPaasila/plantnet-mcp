@@ -9,6 +9,8 @@ from typing import Any
 
 import httpx
 
+from .location import resolve_location
+
 API_BASE = "https://my-api.plantnet.org/v2/identify"
 VALID_ORGANS = frozenset({"auto", "leaf", "flower", "fruit", "bark", "habit"})
 VALID_IMAGE_SUFFIXES = frozenset({".jpg", ".jpeg", ".png"})
@@ -122,7 +124,11 @@ def _trim_species(entry: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def normalize_response(payload: dict[str, Any], top_n: int = TOP_RESULTS) -> dict[str, Any]:
+def normalize_response(
+    payload: dict[str, Any],
+    top_n: int = TOP_RESULTS,
+    location: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     results = [_trim_species(item) for item in (payload.get("results") or [])[:top_n]]
     predicted = []
     for item in payload.get("predictedOrgans") or []:
@@ -131,13 +137,16 @@ def normalize_response(payload: dict[str, Any], top_n: int = TOP_RESULTS) -> dic
             "organ": item.get("organ"),
             "score": item.get("score"),
         })
-    return {
+    out = {
         "bestMatch": payload.get("bestMatch"),
         "project": (payload.get("query") or {}).get("project"),
         "language": payload.get("language"),
         "predictedOrgans": predicted,
         "results": results,
     }
+    if location is not None:
+        out["location"] = location
+    return out
 
 
 def identify_plant(
@@ -148,6 +157,9 @@ def identify_plant(
     organs: list[str] | None = None,
     project: str = "all",
     lang: str = "en",
+    latitude: float | None = None,
+    longitude: float | None = None,
+    use_location: bool = True,
     include_reference_images: bool = False,
     timeout: float = 60.0,
     client: httpx.Client | None = None,
@@ -167,6 +179,22 @@ def identify_plant(
     )
     project_value = (project or "all").strip() or "all"
     lang_value = (lang or "en").strip() or "en"
+
+    location_info: dict[str, Any] | None = None
+    if use_location and project_value == "all":
+        try:
+            location_info = resolve_location(
+                image_paths=paths,
+                latitude=latitude,
+                longitude=longitude,
+                api_key=key,
+                timeout=timeout,
+                client=client,
+            )
+        except ValueError as exc:
+            raise PlantNetError(str(exc)) from exc
+        if location_info is not None:
+            project_value = location_info["project"]
 
     url = f"{API_BASE}/{project_value}"
     params = {"api-key": key, "lang": lang_value}
@@ -204,4 +232,4 @@ def identify_plant(
     except ValueError as exc:
         raise PlantNetError("Pl@ntNet returned invalid JSON") from exc
 
-    return normalize_response(payload)
+    return normalize_response(payload, location=location_info)

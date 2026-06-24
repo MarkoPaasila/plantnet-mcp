@@ -66,6 +66,28 @@ PLANTNET_IDENTIFY = {
                     "metadata. Default true."
                 ),
             },
+            "latitude": {
+                "type": "number",
+                "description": (
+                    "Optional WGS84 latitude in decimal degrees. Used to pick the "
+                    "nearest flora project when project is all and EXIF GPS is absent."
+                ),
+            },
+            "longitude": {
+                "type": "number",
+                "description": (
+                    "Optional WGS84 longitude in decimal degrees. Must be provided "
+                    "together with latitude."
+                ),
+            },
+            "use_location": {
+                "type": "boolean",
+                "description": (
+                    "When true (default) and project is all, resolve the nearest "
+                    "flora project from EXIF GPS or latitude/longitude. Set false "
+                    "to force worldwide flora regardless of GPS."
+                ),
+            },
         },
         "required": ["image_paths"],
     },

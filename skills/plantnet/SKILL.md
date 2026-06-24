@@ -49,11 +49,14 @@ In interactive `hermes chat`, attach multiple images via `/image` or paste, then
 | `image_paths` | required | 1–5 paths from `[Image attached at: ...]` hints (same plant) |
 | `organ` | `auto` | Applied to every image unless `organs` is set |
 | `organs` | — | Optional per-image organ list (same length as `image_paths`) |
-| `project` | `all` | Flora region; see below |
+| `project` | `all` | Flora region; auto-resolved from GPS when `all` (see below) |
 | `lang` | `en` | Language for common names |
 | `include_reference_images` | `true` | Pl@ntNet database reference photos per result (URLs + citation) |
+| `latitude` | — | Optional WGS84 latitude when EXIF GPS is absent |
+| `longitude` | — | Optional WGS84 longitude (must pair with `latitude`) |
+| `use_location` | `true` | Auto-pick nearest flora from GPS/coordinates when `project` is `all` |
 
-For casual identification, `organ=auto` and `project=all` are fine.
+For casual identification, `organ=auto` and `project=all` are fine — location is resolved automatically when GPS is available.
 
 ### Organ values
 
@@ -68,11 +71,19 @@ Set `organ` when every image shows the same part. Use `organs` when the user lab
 
 ### Project (flora region)
 
-Use `project=all` unless the user specifies a region or you know the photo location:
+When `project` is `all` (default) and `use_location` is true, the plugin reads GPS from image EXIF or uses `latitude`/`longitude` to call Pl@ntNet's projects API and pick the **closest** flora project. Results include a `location` object showing what was used.
+
+- Pass **`latitude` and `longitude`** when the user says where the photo was taken but EXIF is missing.
+- Set **`use_location=false`** only when the user wants worldwide flora regardless of GPS.
+- Set an **explicit `project`** (e.g. `weurope`) to skip auto-resolution.
+
+**EXIF caveat:** Images re-saved by Hermes or Telegram often have GPS stripped. Ask for a location or coordinates if identification seems regionally wrong.
+
+Manual project slugs (when not using auto-resolution):
 
 | Project | Region |
 |---------|--------|
-| `all` | Worldwide (default) |
+| `all` | Worldwide |
 | `weurope` | Western Europe |
 | `canada` | Canada |
 | `useful` | Useful plants |
@@ -86,7 +97,8 @@ More flora lists: https://my.plantnet.org/doc/newfloras
 3. Include **common names** when present, plus scientific name.
 4. Mention close alternatives when scores are similar (user may need a clearer photo).
 5. Note **`predictedOrgans`** if Pl@ntNet detected a different organ than expected.
-6. When **`referenceImages`** are present (default with `include_reference_images=true`), share the medium **`url`** for the top match and include the **`citation`** (e.g. "Konstans Big / Pl@ntNet, cc-by-sa"). These are reference photos from the Pl@ntNet database, not the user's uploads.
+6. Mention **`location`** when present (e.g. "Identified using the Southwestern Europe flora based on photo GPS").
+7. When **`referenceImages`** are present (default with `include_reference_images=true`), share the medium **`url`** for the top match and include the **`citation`** (e.g. "Konstans Big / Pl@ntNet, cc-by-sa"). These are reference photos from the Pl@ntNet database, not the user's uploads.
 
 Example phrasing: "Most likely *Rosa canina* (dog rose) — 91% confidence. Alternatives: *Rosa rubiginosa* (78%), *Rosa arvensis* (65%)."
 
@@ -94,5 +106,6 @@ Example phrasing: "Most likely *Rosa canina* (dog rose) — 91% confidence. Alte
 
 - JPEG and PNG only; 1 to 5 images per call, all must be the same plant individual.
 - Results are probabilistic; low scores mean uncertain identification.
-- Regional `project` improves accuracy when the plant is from that flora.
+- Regional `project` improves accuracy when the plant is from that flora; auto-resolution handles this when GPS is available.
+- EXIF GPS is often stripped on Telegram and other channels — use explicit coordinates or ask the user for location.
 - Slow Telegram album downloads may occasionally split images across separate agent turns (Hermes limitation).
