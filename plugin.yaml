@@ -1,5 +1,5 @@
 name: plantnet
-version: 0.5.0
+version: 0.5.1
 description: Identify plants via Pl@ntNet API (my.plantnet.org)
 author: marko
 requires_env:

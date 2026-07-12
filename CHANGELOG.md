@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-12
+
+### Fixed
+
+- Plugin failed to load under Hermes' directory-plugin loader (`No module named 'hermes_plantnet_plugin'`), leaving `plantnet_identify` unregistered. Root cause: plugin-root shims used absolute imports `from hermes_plantnet_plugin...`, but the loader imports the plugin as the `plantnet` package, so the subpackage is only reachable as `plantnet.hermes_plantnet_plugin`. Switched the shims to relative imports `from .hermes_plantnet_plugin...`.
+
 ## [0.5.0] - 2026-06-24
 
 ### Added
@@ -44,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking:** `image_path` (single string) replaced by `image_paths` (array of 1–5 paths). Pass a single image as a one-element array.
 
-[Unreleased]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/MarkoPaasila/plantnet-mcp/compare/v0.2.0...v0.3.0
